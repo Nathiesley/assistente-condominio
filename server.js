@@ -35,21 +35,26 @@ function csvParaJson(csv) {
 }
 
 // 🚀 ENDPOINT
+// ... (mantenha o início igual)
+
 app.post("/rateio", async (req, res) => {
   try {
-    const { mensagem, etapa, anos, meses } = req.body;
+    // Adicionado valores padrão para evitar erros de undefined
+    const { mensagem, etapa = "cpf", anos = [], meses = [] } = req.body;
 
     const response = await axios.get(PLANILHA_URL);
     const dados = csvParaJson(response.data);
 
-    // 🔎 filtrar cliente
+    // 🔎 filtrar cliente (Normaliza o CPF removendo pontos/traços se necessário)
     const clienteDados = dados.filter(
-      item => item["CPF/CNPJ"] === mensagem
+      item => item["CPF/CNPJ"]?.trim() === mensagem?.trim()
     );
 
-    if (clienteDados.length === 0) {
+    // Se estiver na etapa inicial e não achar o CPF
+    if (etapa === "cpf" && clienteDados.length === 0) {
       return res.json({
-        reply: "❌ CPF/CNPJ não encontrado. Digite novamente."
+        reply: "❌ CPF/CNPJ não encontrado. Digite novamente.",
+        nextStep: "cpf" // Força o bot a continuar pedindo o CPF
       });
     }
 
